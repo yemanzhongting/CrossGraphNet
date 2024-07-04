@@ -126,6 +126,48 @@ class BiLSTMCNN(nn.Module):
         out = self.gcn(out, edge_index)
         return self.fc(out)
 
+class AttentionLSTM(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, output_size=1):
+        super(AttentionLSTM, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.attention = nn.MultiheadAttention(hidden_size, num_heads=1, batch_first=True)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, _):
+        lstm_out, _ = self.lstm(x)
+        attn_out, _ = self.attention(lstm_out, lstm_out, lstm_out)
+        out = self.fc(attn_out[:, -1, :])
+        return out
+
+class TransformerModel(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, output_size=1, nhead=4, num_layers=2):
+        super(TransformerModel, self).__init__()
+        self.embedding = nn.Linear(input_size, hidden_size)
+        self.transformer = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(d_model=hidden_size, nhead=nhead, batch_first=True),
+            num_layers=num_layers
+        )
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, _):
+        x = self.embedding(x)
+        out = self.transformer(x)
+        return self.fc(out[:, -1, :])
+
+class LSTMGCN(nn.Module):
+    def __init__(self, input_size=1, hidden_size=64, output_size=1):
+        super(LSTMGCN, self).__init__()
+        self.lstm = nn.LSTM(input_size, hidden_size, batch_first=True)
+        self.gcn = GCNConv(hidden_size, hidden_size)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x, edge_index):
+        out, _ = self.lstm(x)
+        out = out[:, -1, :]  # 取最后一个时间步
+        edge_index = edge_index.t().contiguous().long()
+        out = self.gcn(out, edge_index)
+        return self.fc(out)
+
 def custom_loss(predictions, targets, mask):
     lower_bound, upper_bound = 50, 110
     # 应用 mask
@@ -160,15 +202,15 @@ def masked_mae_loss(pred, target, mask):
 density_cols = ['VN211129', 'VN220504', 'VN221026', 'VN231101']
 speed_cols = ['F2021_11_3', 'F2022_05_0', 'F2022_10_2', 'F2023_11_0']
 
-models = [LSTM(), STRNN(), STLSTM(), CTLE(), BiLSTMCNN()]
-model_names = ['LSTM', 'ST-RNN', 'ST-LSTM', 'CTLE', 'BiLSTM-CNN']
+models = [LSTM(), STRNN(), STLSTM(), CTLE(), BiLSTMCNN(),LSTMGCN(),TransformerModel(),AttentionLSTM()]
+model_names = ['LSTM', 'ST-RNN', 'ST-LSTM', 'CTLE', 'BiLSTM-CNN','LSTMGCN', 'TransformerModel', 'AttentionLSTM']
 
 results = {}
 
 for model, model_name in zip(models, model_names):
     print(f"Training {model_name}")
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005, weight_decay=5e-4)
-    criterion = masked_mse_loss
+    criterion = custom_loss
 
     # 准备训练数据
     train_x = []
@@ -235,20 +277,22 @@ for model, model_name in zip(models, model_names):
         mae = masked_mae_loss(output_test[mask], y[mask], mask[mask])
         rmse = torch.sqrt(mse)
 
-        # 计算R2分数 (只考虑有效的y值)
+        # 计算R2分数和RSE (只考虑有效的y值)
         y_valid = y[mask].squeeze()
         output_valid = output_test[mask].squeeze()
         y_mean = torch.mean(y_valid)
         ss_tot = torch.sum((y_valid - y_mean) ** 2)
         ss_res = torch.sum((y_valid - output_valid) ** 2)
         r2 = 1 - (ss_res / ss_tot)
+        rse = ss_res / ss_tot  # 新增RSE计算
 
         results[model_name] = {
             'MSE': mse.item(),
             'MAE': mae.item(),
             'RMSE': rmse.item(),
             'R2': r2.item(),
-            'test_loss':test_loss.item()
+            'RSE': rse.item(),  # 新增RSE结果
+            'test_loss': test_loss.item()
         }
 
     print(f"{model_name} Test Loss: {test_loss.item():.4f}")

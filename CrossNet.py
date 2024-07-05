@@ -73,7 +73,8 @@ class CrossAttentionGCN(torch.nn.Module):
         # torch.Size([4, 1, 16])
         # torch.Size([1, 4, 4])
         attended_embeddings = attended_embeddings.mean(dim=1)
-
+        #([4, 16])
+      
         # 经过Attention后再进行GCN
         # batch_size, num_nodes = attended_embeddings.size(0), attended_embeddings.size(1)
         # edge_index = data[0].edge_index.repeat(1, batch_size)

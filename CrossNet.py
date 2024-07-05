@@ -84,6 +84,22 @@ class CrossAttentionGCN(torch.nn.Module):
         # out = F.relu(self.gcn_final(attended_embeddings.view(-1, hidden_channels), edge_index))
         # out = self.linear(out).view(batch_size, num_nodes)
 
+        #先linear再GCN
+        # batch_size, num_features = attended_embeddings.size(0), attended_embeddings.size(1)
+        # num_nodes = data[0].num_nodes  # 假设每个图的节点数相同
+        # # 先进行线性变换
+        # out = self.linear(attended_embeddings)  # 输出大小: [batch_size, num_nodes]
+        # # 重构边索引以适应批处理后的图结构
+        # edge_index = data[0].edge_index.repeat(1, batch_size)
+        # edge_index[0] += torch.arange(0, batch_size * num_nodes, num_nodes).repeat_interleave(edge_index.size(1))
+        # edge_index[1] += torch.arange(0, batch_size * num_nodes, num_nodes).repeat_interleave(edge_index.size(1))
+        # # 重塑out以适应GCN输入
+        # out = out.view(-1, 1)  # 将每个节点的特征变为1维
+        # # 应用最后的GCN层
+        # out = F.relu(self.gcn_final(out, edge_index))
+        # # 重塑输出
+        # out = out.view(batch_size, num_nodes)
+      
         #简单方法，直接linear输出
         # torch.Size([4, 16])
         out = self.linear(attended_embeddings)

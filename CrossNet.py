@@ -53,7 +53,8 @@ class CrossAttentionGCN(torch.nn.Module):
         self.gcn2 = GCNConv(hidden_channels, hidden_channels)
         self.attention = MultiheadAttention(hidden_channels, num_heads)
         self.linear = Linear(hidden_channels, num_nodes)
-
+        self.gcn_final = GCNConv(hidden_channels, hidden_channels)  # 新添加的GCN层
+      
     def forward(self, data):
         embeddings = []
         for sub_data in data:
@@ -72,6 +73,17 @@ class CrossAttentionGCN(torch.nn.Module):
         # torch.Size([4, 1, 16])
         # torch.Size([1, 4, 4])
         attended_embeddings = attended_embeddings.mean(dim=1)
+
+        # 经过Attention后再进行GCN
+        # batch_size, num_nodes = attended_embeddings.size(0), attended_embeddings.size(1)
+        # edge_index = data[0].edge_index.repeat(1, batch_size)
+        # edge_index[0] += torch.arange(0, batch_size * num_nodes, num_nodes).repeat_interleave(edge_index.size(1))
+        # edge_index[1] += torch.arange(0, batch_size * num_nodes, num_nodes).repeat_interleave(edge_index.size(1))
+        # 应用最后的GCN层
+        # out = F.relu(self.gcn_final(attended_embeddings.view(-1, hidden_channels), edge_index))
+        # out = self.linear(out).view(batch_size, num_nodes)
+
+        #简单方法，直接linear输出
         # torch.Size([4, 16])
         out = self.linear(attended_embeddings)
         # torch.Size([4, 10]) num_nodes = 10
@@ -122,8 +134,6 @@ all_data = [prepare_data(*cols) for cols in [
     ('VN231101', 'F2023_11_0')
 ]]
 
-#--------
-import torch.nn.functional as F
 
 def custom_loss(predictions, targets):
     lower_bound, upper_bound=50,110
@@ -157,11 +167,6 @@ def custom_loss(predictions, targets):
 # Final Loss: 20.86109733581543
 
 
-
-####loss
-
-
-
 # 在训练循环中使用这个自定义损失函数
 # optimizer.zero_grad()
 # predictions = model(data)
@@ -169,7 +174,6 @@ def custom_loss(predictions, targets):
 # loss.backward()
 # optimizer.step()
 ####loss
-
 
 
 #可以进行增量学习
@@ -293,17 +297,4 @@ for mask in [torch.tensor([False,True,True,True]),torch.tensor([True,False,True,
         Meanes['R2'].append(r_squared.item())
         Meanes['Loss'].append(test_loss.item())
 
-        # Calculate and print the mean of each metric
-        # for key in Meanes:
-        #     average = sum(Meanes[key]) / len(Meanes[key])
-        #     print(f'Mean {key}: {average}')
-
-        # # Output the final loss
-
-
     print(f"Final Loss: {loss.item()}")
-
-
-#
-# # Output the final testing loss
-# print(f"Final Test Loss: {test_loss.item()}")

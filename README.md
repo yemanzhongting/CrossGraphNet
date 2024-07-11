@@ -1,6 +1,12 @@
 # CrossGraphNet: A Fast Cross-Spatiotemporal Graph-based Method for Traffic Flow Reconstruction Using Remote Sensing Vehicle Detection
 
-<details>
+<div style="text-align: right;">
+  <button onclick="document.getElementById('english').style.display='block';document.getElementById('chinese').style.display='none';">English</button>
+  <button onclick="document.getElementById('chinese').style.display='block';document.getElementById('english').style.display='none';">中文</button>
+</div>
+
+<div id="english" style="display: block;">
+<details open>
 <summary>English</summary>
 
 ## Introduction
@@ -48,8 +54,10 @@ The model uses road network data and traffic flow data, including:
 - Explore integration with other traffic data sources
 
 </details>
+</div>
 
-<details>
+<div id="chinese" style="display: none;">
+<details open>
 <summary>中文</summary>
 
 ## 简介
@@ -97,3 +105,4 @@ CrossGraphNet 的核心是 `CrossAttentionGCN` 类，包括：
 - 探索与其他交通数据源的整合
 
 </details>
+</div>

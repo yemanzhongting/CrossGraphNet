@@ -297,8 +297,6 @@ for model, model_name in zip(models, model_names):
 
     print(f"{model_name} Test Loss: {test_loss.item():.4f}")
 
-# 打印所有模型的结果
-# 打印所有模型的结果
 print("\nModel Comparison Results:")
 for model_name, metrics in results.items():
     print(f"\n{model_name}:")

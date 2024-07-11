@@ -36,7 +36,7 @@ for edge in edges[1:]:
   tmp=list(map(int,edge.split(' ')[0:2]))
   edge_index.append([tmp[0]-1,tmp[1]-1])
 edge_index = torch.tensor(edge_index, dtype=torch.long)
-# torch.Size([2372, 2]) ->转
+# torch.Size([2372, 2]) ->
 # edge_index = torch.tensor(edge_index, dtype=torch.long)
 edge_index = edge_index.t()
 
@@ -161,37 +161,6 @@ def custom_loss(predictions, targets):
     total_loss = mse_loss + penalty_lower + penalty_upper
     return total_loss
 
-# Test MSE: 23.707172393798828
-# Test MAE: 3.7119181156158447
-# Test RMSE: 4.869001388549805
-# Test RSE: 0.1372707337141037
-# Test R²: 0.858916163444519
-# Final Loss: 22.792165756225586
-
-# def custom_loss(predictions, targets):
-#     lower_bound, upper_bound = 50, 110
-#     mse_loss = F.mse_loss(predictions, targets)
-#     # 惩罚超出上下限的预测值
-#     penalty_lower = torch.sum(F.relu(lower_bound - predictions) ** 2)
-#     penalty_upper = torch.sum(F.relu(predictions - upper_bound) ** 2)
-#     total_loss = mse_loss + penalty_lower + penalty_upper
-#     return total_loss
-# Test MSE: 24.785675048828125
-# Test MAE: 3.6857142448425293
-# Test RMSE: 4.978521347045898
-# Test RSE: 0.13722822070121765
-# Test R²: 0.8589599132537842
-# Final Loss: 20.86109733581543
-
-
-# 在训练循环中使用这个自定义损失函数
-# optimizer.zero_grad()
-# predictions = model(data)
-# loss = custom_loss(predictions, targets, lower_bound, upper_bound)
-# loss.backward()
-# optimizer.step()
-####loss
-
 
 #可以进行增量学习
 # out_mask = torch.tensor([True,True,True,False])
@@ -200,9 +169,6 @@ out_mask = torch.tensor([False,True,True,True])
 for mask in [torch.tensor([False,True,True,True]),torch.tensor([True,False,True,True]),
              torch.tensor([True,True,False,True]),torch.tensor([True,True,True,False])]:
     out_mask=mask
-# out_mask = torch.tensor([True,False,True,False])
-#
-# out_mask = torch.tensor([False,True,True,True])
 
     # Initialize model, optimizer, and loss function
     model = CrossAttentionGCN(num_features=1, hidden_channels=64,
@@ -265,13 +231,11 @@ for mask in [torch.tensor([False,True,True,True]),torch.tensor([True,False,True,
         outputs = outputs[~out_mask]  # Apply mask to select specific graphs
         print(outputs[0].tolist())
 
-        #
-
         targets = torch.stack([y_list[i] for i in range(len(y_list)) if ~out_mask[i]])
         # Select targets based on mask
         # 使用 squeeze() 方法移除最后一个维度
         targets_squeezed = targets.squeeze(-1)  # 指定-1移除最后一个维度，这里维度大小为1
-        # 别人的是torch.Size([2, 10]) 训练数+node_number
+        # 是torch.Size([2, 10]) 训练数+node_number
         # 处理双重mask
         train_mask = torch.stack([mask_list[i] for i in range(len(mask_list)) if ~out_mask[i]])
         train_mask = train_mask.squeeze(-1)  # 指定-1移除最后一个维度，这里维度大小为1

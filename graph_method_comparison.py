@@ -267,10 +267,3 @@ for graph in [AGNNNet, ChebNet, GCN1, GCN2, GAT, GraphSAGE]:
         print(f'Test RMSE: {rmse.item()}')
         print(f'Test RSE: {rse.item()}')
         print(f'Test R²: {r_squared.item()}')
-
-        # Meanes['MSE'].append(mse.item())
-        # Meanes['MAE'].append(mae.item())
-        # Meanes['RMSE'].append(rmse.item())
-        # Meanes['RSE'].append(rse.item())
-        # Meanes['R2'].append(r_squared.item())
-        # Meanes['Loss'].append(test_loss.item())

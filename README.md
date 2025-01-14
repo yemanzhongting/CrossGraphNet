@@ -3,6 +3,8 @@
 <details>
 <summary>English</summary>
 
+![Photo 1](/Picture1.gif)
+
 ## Introduction
 CrossGraphNet is an innovative approach to traffic flow reconstruction using remote sensing vehicle detection data. It employs a cross-spatiotemporal graph-based method to effectively analyze and predict traffic patterns.
 
